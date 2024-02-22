@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+    <meta charset="UTF-8">
     <!-- Prosty wizualizator dowodów e-Doręczen w postaci plików XML. 
          Autor: Robert Błaut -->
     <style type='text/css'>
@@ -74,9 +75,9 @@
           day: 'numeric',
           hour: "numeric",
           minute: "numeric",
-          second: "numeric",
+          second: "numeric"
        };
-       var readXml=null;
+       var readXml = null;
        $('#xmlForm').submit(function(event) {
            event.preventDefault();
            var selectedFile = document.getElementById('input').files[0];
@@ -87,23 +88,25 @@
                var parser = new DOMParser();
                var doc = parser.parseFromString(readXml, "application/xml");
                var nodes = doc.querySelectorAll("*");
-               outText = ''
                for (var i = 0; i < nodes.length; i++) {
-                    if (nodes[i].childNodes.length == 1 && nodes[i].childNodes[0].nodeType == 3 && nodes[i].tagName != 'mstns:PodpisObraz') {
-                        if (!(isNaN(new Date(nodes[i].childNodes[0].textContent)))) {
-                          nodes[i].childNodes[0].textContent = new Date(nodes[i].childNodes[0].textContent).toLocaleDateString('pl-PL', options)
+                    if (nodes[i].childNodes.length == 1 && 
+                        nodes[i].childNodes[0].nodeType == 3 && 
+                        nodes[i].tagName != 'mstns:PodpisObraz') {
+                        if (!(isNaN(new Date(nodes[i].childNodes[0].textContent))) && 
+                            nodes[i].childNodes[0].textContent.length>=19) {
+                          nodes[i].childNodes[0].textContent = new Date(nodes[i].childNodes[0].textContent).toLocaleDateString('pl-PL', options);
                         }
                         nodes[i].insertAdjacentHTML('afterBegin', "<span>" + nodes[i].tagName.replace(/([A-Z][a-z])/g, ' $1').trim() + ":</span>");
 
                     }
                     else if (nodes[i].childNodes.length > 1) {
-                        nodes[i].insertAdjacentHTML('afterBegin', nodes[i].tagName.replace(/([A-Z])/g, ' $1').trim() + ": ")
+                        nodes[i].insertAdjacentHTML('afterBegin', nodes[i].tagName.replace(/([A-Z])/g, ' $1').trim() + ": ");
                     }
                     else if (nodes[i].childNodes.length == 0 && nodes[i].tagName != 'mstns:Podpis') {
-                        nodes[i].insertAdjacentHTML('afterBegin', "<span>" + nodes[i].tagName.replace(/([A-Z])/g, ' $1').trim() + ":</span> —")
+                        nodes[i].insertAdjacentHTML('afterBegin', "<span>" + nodes[i].tagName.replace(/([A-Z])/g, ' $1').trim() + ":</span> —");
                     }
                     else if (nodes[i].childNodes.length == 0 && nodes[i].tagName == 'mstns:Podpis') {
-                        nodes[i].insertAdjacentHTML('afterBegin', "<span>" + nodes[i].tagName.replace(/([A-Z])/g, ' $1').trim() + ":</span>")
+                        nodes[i].insertAdjacentHTML('afterBegin', "<span>" + nodes[i].tagName.replace(/([A-Z])/g, ' $1').trim() + ":</span>");
                     }
                     else if (nodes[i].tagName == 'mstns:PodpisObraz') {
                         nodes[i].insertAdjacentHTML('afterBegin', '<img src="data:image/png;base64, ' + nodes[i].childNodes[0].textContent + '" />');
