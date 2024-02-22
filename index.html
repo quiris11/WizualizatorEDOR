@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <!-- Prosty wizualizator dowodów e-Doręczen w postaci plików XML. 
+         Autor: Robert Błaut -->
+    <style type='text/css'>
+        body, form {
+          font-family: sans-serif;
+          margin: 1em;
+        }
+        h2 {
+          text-align: center;
+        }
+
+        form,
+        #content {
+          max-width: 1200px
+        }
+
+        form {
+          margin: auto;
+        }
+
+        input {
+          display: block;
+          margin: 2em 0;
+        }
+
+        #content {
+          border: 1px solid silver;
+          margin: auto;
+        }
+
+        #content * {
+          display: block;
+          margin: 1em;
+          font-weight: bold;
+        }
+
+        #content span {
+          display: inline;
+          font-weight: normal;
+          margin: 0 0.2em 0 0;
+        }
+
+        #content mstns\:danebiometryczne,
+        #content ds\:signature,
+        #content mstns\:SHA256  {
+          display: none !important;
+        }
+
+        #content img {
+          border: 1px solid green;
+          display: inline-block;
+          max-width:100%;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js">
+    </script>
+    <title>Wizualizator dowodów eDoręczen</title>
+</head>
+<body>
+    <h2>Wizualizator dowodów e-Doręczeń</h2>
+    <form id="xmlForm" name="xmlForm">
+        <label for="input">Wybierz plik XML z dowodem pobranym z EZD:</label>
+        <input id="input" type="file" accept=".xml" value="Wybierz plik"/>
+        <input type="submit" value="Prześlij" />
+    </form>
+    <script>
+       const options = {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+       };
+       var readXml=null;
+       $('#xmlForm').submit(function(event) {
+           event.preventDefault();
+           var selectedFile = document.getElementById('input').files[0];
+           var reader = new FileReader();
+           var s = new XMLSerializer();
+           reader.onload = function(e) {
+               readXml=e.target.result;
+               var parser = new DOMParser();
+               var doc = parser.parseFromString(readXml, "application/xml");
+               var nodes = doc.querySelectorAll("*");
+               outText = ''
+               for (var i = 0; i < nodes.length; i++) {
+                    if (nodes[i].childNodes.length == 1 && nodes[i].childNodes[0].nodeType == 3 && nodes[i].tagName != 'mstns:PodpisObraz') {
+                        if (!(isNaN(new Date(nodes[i].childNodes[0].textContent)))) {
+                          nodes[i].childNodes[0].textContent = new Date(nodes[i].childNodes[0].textContent).toLocaleDateString('pl-PL', options)
+                        }
+                        nodes[i].insertAdjacentHTML('afterBegin', "<span>" + nodes[i].tagName.replace(/([A-Z][a-z])/g, ' $1').trim() + ":</span>");
+
+                    }
+                    else if (nodes[i].childNodes.length > 1) {
+                        nodes[i].insertAdjacentHTML('afterBegin', nodes[i].tagName.replace(/([A-Z])/g, ' $1').trim() + ": ")
+                    }
+                    else if (nodes[i].childNodes.length == 0 && nodes[i].tagName != 'mstns:Podpis') {
+                        nodes[i].insertAdjacentHTML('afterBegin', "<span>" + nodes[i].tagName.replace(/([A-Z])/g, ' $1').trim() + ":</span> —")
+                    }
+                    else if (nodes[i].childNodes.length == 0 && nodes[i].tagName == 'mstns:Podpis') {
+                        nodes[i].insertAdjacentHTML('afterBegin', "<span>" + nodes[i].tagName.replace(/([A-Z])/g, ' $1').trim() + ":</span>")
+                    }
+                    else if (nodes[i].tagName == 'mstns:PodpisObraz') {
+                        nodes[i].insertAdjacentHTML('afterBegin', '<img src="data:image/png;base64, ' + nodes[i].childNodes[0].textContent + '" />');
+                            nodes[i].childNodes[1].textContent = ''
+                    }
+               }
+               str = s.serializeToString(doc);
+               document.querySelector('#content').innerHTML = str.replace(/(mstns:\s)/g, '');
+           }
+           text = reader.readAsText(selectedFile);
+       });
+    </script>
+    <div id="content" />
+</body>
+</html>
